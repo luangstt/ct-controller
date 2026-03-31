@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CT Controller - Master</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-header">
+        <div class="drops-logo">
+            <svg class="drops-svg" viewBox="0 0 100 100"><path d="M70 30C70 41 61 50 50 50C39 50 30 41 30 30C30 19 50 0 50 0C50 0 70 19 70 30Z" fill="#ffeb3b" fill-opacity="0.8"/><path d="M60 45C60 56 51 65 40 65C29 65 20 56 20 45C20 34 40 15 40 15C40 15 60 34 60 45Z" fill="#ff9800" fill-opacity="0.8"/><path d="M50 60C50 71 41 80 30 80C19 80 10 71 10 60C10 49 30 30 30 30C30 30 50 49 50 60Z" fill="#ed1c24" fill-opacity="0.8"/></svg>
+        </div>
+        <h2 style="margin: 0;">CT Controller</h2>
+    </div>
+    <div class="card" style="width: 320px;">
+        <label>Unidade</label>
+        <select id="unit-select">
+            <option value="">Escolha...</option>
+            <option value="001-Casa das Tintas Matriz">001-Matriz</option>
+            <option value="003-Casa das Tintas Tabuleiro">003-Tabuleiro</option>
+            <option value="004-Casa das tintas Barro Duro">004-Barro Duro</option>
+            <option value="005-Casa das tintas Ponta Verde">005-Ponta Verde</option>
+            <option value="007-Casa das tintas Ouro Preto">007-Ouro Preto</option>
+            <option value="008-Casa das tintas francês">008-Francês</option>
+            <option value="009-Casa do atacado">009-Atacado</option>
+            <option value="ADMIN-TI">ACESSO MASTER T.I</option>
+        </select>
+        <input type="text" id="user-input" placeholder="Usuário">
+        <input type="password" id="pass-input" placeholder="Senha">
+        <button class="btn btn-save" onclick="autenticar()">Entrar</button>
+    </div>
+</div>
+
+<div id="app-content" style="display: none;">
+    <header class="header no-print">
+        <div class="logo-text">CONTROLE CT</div>
+        <button onclick="location.reload()" style="background:none; border:none; color:var(--danger); font-size:0.7rem; font-weight:800; cursor:pointer;">SAIR</button>
+    </header>
+
+    <div class="container">
+        <div id="ti-switcher" class="card no-print" style="display:none; border-color:var(--purple-btn)">
+            <label style="color:var(--purple-btn)">VER OUTRA FILIAL</label>
+            <select id="ti-view-unit" onchange="alterarVisao(this.value)">
+                <option value="001-Casa das Tintas Matriz">001-Matriz</option>
+                <option value="003-Casa das Tintas Tabuleiro">003-Tabuleiro</option>
+                <option value="004-Casa das tintas Barro Duro">004-Barro Duro</option>
+                <option value="005-Casa das tintas Ponta Verde">005-Ponta Verde</option>
+                <option value="007-Casa das tintas Ouro Preto">007-Ouro Preto</option>
+                <option value="008-Casa das tintas francês">008-Francês</option>
+                <option value="009-Casa do atacado">009-Atacado</option>
+            </select>
+        </div>
+
+        <div id="print-unit-name" style="text-align:center; margin-bottom:10px; font-weight:900;"></div>
+
+        <div class="stats no-print">
+            <div class="stat-card"><span class="stat-label">Vencidos</span><span id="s-vencido" class="stat-val" style="color:var(--danger)">0</span></div>
+            <div class="stat-card"><span class="stat-label">A Vencer</span><span id="s-avencer" class="stat-val" style="color:var(--warning)">0</span></div>
+        </div>
+
+        <div id="aba-urgente" class="content active">
+            <h3 style="font-weight: 900;">⚠️ Alertas Críticos</h3>
+            <div id="lista-urgente"></div>
+        </div>
+
+        <div id="aba-estoque" class="content">
+            <div class="card no-print" style="border-color: var(--success); margin-bottom: 20px;">
+                <label>Relatório por Período de Validade</label>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 10px;">
+                    <div><small>De:</small><input type="date" id="rep-inicio" style="margin-bottom:0; padding:8px;"></div>
+                    <div><small>Até:</small><input type="date" id="rep-fim" style="margin-bottom:0; padding:8px;"></div>
+                </div>
+                <button class="btn btn-pdf" onclick="gerarPDF()" style="margin-bottom:0;">📄 GERAR RELATÓRIO PDF</button>
+            </div>
+            <input type="text" id="busca" placeholder="🔍 Filtrar produtos..." onkeyup="atualizarDOM()">
+            <div id="lista-estoque"></div>
+        </div>
+
+        <div id="aba-cadastrar" class="content">
+            <div class="card">
+                <button class="btn no-print" style="background:var(--purple-btn); color:white; margin-bottom:10px" onclick="document.getElementById('camera-file').click()">📷 ESCANEAR PRODUTO</button>
+                <button class="btn btn-attach no-print" onclick="document.getElementById('gallery-file').click()">📎 ANEXAR FOTO</button>
+                <input type="file" id="camera-file" accept="image/*" capture="environment" style="display:none" onchange="previewImage(this)">
+                <input type="file" id="gallery-file" accept="image/*" style="display:none" onchange="previewImage(this)">
+                <div id="preview-container" class="preview-box"><img id="img-preview" src=""></div>
+                <input type="hidden" id="f-edit-id">
+                <label>Nome do Produto</label>
+                <input type="text" id="f-nome" placeholder="Ex: Coral Rende Muito">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+                    <div><label>Validade</label><input type="date" id="f-val"></div>
+                    <div><label>Qtd</label><input type="number" id="f-qtd" value="1"></div>
+                </div>
+                <label>Marca (Opcional)</label>
+                <input type="text" id="f-marca" placeholder="Ex: Coral, Suvinil...">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+                    <div><label>Linha (Opcional)</label><input type="text" id="f-linha" placeholder="Ex: Premium"></div>
+                    <div><label>Lote (Opcional)</label><input type="text" id="f-lote" placeholder="Ex: 12345"></div>
+                </div>
+                <button class="btn btn-save" onclick="salvarItem()">SALVAR NA NUVEM</button>
+            </div>
+        </div>
+
+        <div id="aba-ti" class="content">
+            <div class="card">
+                <h3 style="color:var(--purple-btn)">🛠 Gestão de Usuários</h3>
+                <button class="btn btn-attach" onclick="limparFormTI()">+ NOVO USUÁRIO</button>
+                <hr style="border:0; border-top:1px solid var(--border); margin: 15px 0;">
+                <input type="hidden" id="ti-edit-index" value="">
+                <label>Nome de Usuário</label>
+                <input type="text" id="ti-user-name">
+                <label>Senha</label>
+                <input type="password" id="ti-user-pass">
+                <label>Filial Padrão</label>
+                <select id="ti-user-unit">
+                    <option value="001-Casa das Tintas Matriz">001-Matriz</option>
+                    <option value="003-Casa das Tintas Tabuleiro">003-Tabuleiro</option>
+                    <option value="004-Casa das tintas Barro Duro">004-Barro Duro</option>
+                    <option value="005-Casa das tintas Ponta Verde">005-Ponta Verde</option>
+                    <option value="007-Casa das tintas Ouro Preto">007-Ouro Preto</option>
+                    <option value="008-Casa das tintas francês">008-Francês</option>
+                    <option value="009-Casa do atacado">009-Atacado</option>
+                </select>
+                <label>Nível</label>
+                <select id="ti-user-level">
+                    <option value="comum">Usuário Comum</option>
+                    <option value="admin">Administrador (TI)</option>
+                </select>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                    <input type="checkbox" id="ti-user-multi" style="width:20px; height:20px;">
+                    <label style="margin:0;">Visualizar todas as filiais</label>
+                </div>
+                <button class="btn btn-save" style="background:var(--purple-btn)" onclick="tiSalvarUsuario()">GRAVAR USUÁRIO</button>
+                <hr style="border:0; border-top:1px solid var(--border); margin: 20px 0;">
+                <div id="ti-lista-usuarios"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav no-print">
+        <button class="nav-item active" onclick="verAba(event, 'aba-urgente')"><span>⚠️ Urgente</span></button>
+        <button class="nav-item" onclick="verAba(event, 'aba-estoque')"><span>📦 Estoque</span></button>
+        <button class="nav-item" onclick="verAba(event, 'aba-cadastrar')"><span>➕ Novo</span></button>
+        <button id="nav-ti" class="nav-item" style="display:none" onclick="verAba(event, 'aba-ti')"><span>🛠 T.I.</span></button>
+    </nav>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
