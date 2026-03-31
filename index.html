@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CT Controller - Master</title>
+    <title>CT Controller - Master Cloud</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -63,7 +63,7 @@
 
         <div class="stats no-print">
             <div class="stat-card"><span class="stat-label">Vencidos</span><span id="s-vencido" class="stat-val" style="color:var(--danger)">0</span></div>
-            <div class="stat-card"><span class="stat-label">A Vencer</span><span id="s-avencer" class="stat-val" style="color:var(--warning)">0</span></div>
+            <div class="stat-card"><span class="stat-label">A Vencer (30d)</span><span id="s-avencer" class="stat-val" style="color:var(--warning)">0</span></div>
         </div>
 
         <div id="aba-urgente" class="content active">
@@ -91,6 +91,7 @@
                 <input type="file" id="camera-file" accept="image/*" capture="environment" style="display:none" onchange="previewImage(this)">
                 <input type="file" id="gallery-file" accept="image/*" style="display:none" onchange="previewImage(this)">
                 <div id="preview-container" class="preview-box"><img id="img-preview" src=""></div>
+                
                 <input type="hidden" id="f-edit-id">
                 <label>Nome do Produto</label>
                 <input type="text" id="f-nome" placeholder="Ex: Coral Rende Muito">
@@ -110,10 +111,10 @@
 
         <div id="aba-ti" class="content">
             <div class="card">
-                <h3 style="color:var(--purple-btn)">🛠 Gestão de Usuários</h3>
+                <h3 style="color:var(--purple-btn)">🛠 Gestão de Usuários (Nuvem)</h3>
                 <button class="btn btn-attach" onclick="limparFormTI()">+ NOVO USUÁRIO</button>
                 <hr style="border:0; border-top:1px solid var(--border); margin: 15px 0;">
-                <input type="hidden" id="ti-edit-index" value="">
+                <input type="hidden" id="ti-edit-id" value="">
                 <label>Nome de Usuário</label>
                 <input type="text" id="ti-user-name">
                 <label>Senha</label>
